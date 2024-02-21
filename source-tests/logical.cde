@@ -1,0 +1,6 @@
+# Sample test from design specifications for CODE.
+BEGIN CODE
+    INT a = 100, b = 200, c = 300
+    BOOL d = "FALSE"
+    d = (a < b AND c <> 200)
+END CODE

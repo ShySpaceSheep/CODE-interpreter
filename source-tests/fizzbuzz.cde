@@ -9,19 +9,19 @@ BEGIN CODE
     BEGIN WHILE
         IF (counter % fizzNum == 0 AND counter % buzzNum == 0)
         BEGIN IF
-            DISPLAY "FizzBuzz" $
+            DISPLAY: "FizzBuzz" $
         END IF
         ELSE IF (counter % fizzNum == 0)
         BEGIN IF
-            DISPLAY "Fizz" $
+            DISPLAY: "Fizz" $
         END IF
         ELSE IF (counter % buzzNum == 0)
         BEGIN IF
-            DISPLAY "Buzz" $
+            DISPLAY: "Buzz" $
         END IF
         ELSE
         BEGIN IF 
-            DISPLAY counter $
+            DISPLAY: counter $
         END IF
     END WHILE
 END CODE

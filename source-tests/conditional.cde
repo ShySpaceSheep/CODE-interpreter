@@ -1,0 +1,11 @@
+BEGIN CODE
+    BOOL state = "TRUE"
+    IF (state)
+    BEGIN IF
+        DISPLAY: "Success!"
+    END IF
+    ELSE
+    BEGIN IF
+        DISPLAY: "Failure!"
+    END IF
+END CODE

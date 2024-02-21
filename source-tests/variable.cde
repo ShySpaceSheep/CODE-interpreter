@@ -1,0 +1,8 @@
+BEGIN CODE
+    INT num1 = 0, num2 = 1
+    CHAR chr1 = 'c', chr2 = 'o', chr3 = 'd', chr4 = 'e'
+    BOOL nay = "FALSE", yay = "TRUE"
+
+    INT aggregation = num1 + num2
+    DISPLAY: chr1 & chr2 & chr3 & chr4
+END CODE
