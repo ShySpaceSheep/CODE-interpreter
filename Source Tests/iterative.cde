@@ -1,0 +1,7 @@
+﻿BEGIN CODE
+    INT max = 1000, i = 0
+    WHILE (i < 1000)
+    BEGIN WHILE
+        DISPLAY: i $
+    END WHILE
+END CODE

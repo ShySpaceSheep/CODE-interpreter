@@ -1,0 +1,4 @@
+﻿# Nothing in this source file is going to be run
+BEGIN CODE
+	# DISPLAY: "Hello world from CODE!"
+END CODE
