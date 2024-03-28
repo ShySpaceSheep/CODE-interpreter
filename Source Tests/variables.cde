@@ -1,0 +1,8 @@
+﻿BEGIN CODE
+    INT num1 = 0, num2 = 1
+    CHAR chr1 = 'C', chr2 = 'O', chr3 = 'D', chr4 = 'E'
+    BOOL nay = "FALSE", yay = "TRUE"
+
+    INT aggregation = num1 + num2
+    DISPLAY: aggregation $ ": " $ chr1 & chr2 & chr3 & chr4 $ " is neither " $ yay $ " nor " $ nay $
+END CODE

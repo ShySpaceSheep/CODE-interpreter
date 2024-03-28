@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CODE_interpreter_csharp.Source_Tests
-{
-    class conditional
-    {
-    }
-}
+﻿BEGIN CODE
+	BOOL state = "TRUE"
+	IF (state)
+	BEGIN IF
+		DISPLAY: "Success!"
+	END IF
+	ELSE
+	BEGIN IF
+		DISPLAY: "Failure!"
+	END IF
+END CODE

@@ -1,0 +1,27 @@
+﻿# This is among one of the popular interview questions.
+# It is called the Fizzbuzz question. Read more: https://en.wikipedia.org/wiki/Fizz_buzz
+BEGIN CODE
+    INT ceiling = 100, counter = 1
+    INT fizzNum = 3, buzzNum = 5
+
+    # Main control of the program.
+    WHILE (counter <> ceiling)
+    BEGIN WHILE
+        IF (counter % fizzNum == 0 AND counter % buzzNum == 0)
+        BEGIN IF
+            DISPLAY: "FizzBuzz" $
+        END IF
+        ELSE IF (counter % fizzNum == 0)
+        BEGIN IF
+            DISPLAY: "Fizz" $
+        END IF
+        ELSE IF (counter % buzzNum == 0)
+        BEGIN IF
+            DISPLAY: "Buzz" $
+        END IF
+        ELSE
+        BEGIN IF 
+            DISPLAY: counter $
+        END IF
+    END WHILE
+END CODE
