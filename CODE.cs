@@ -17,11 +17,13 @@ namespace CODE_interpreter
             EXIT_ERR_FILE = 72,
         }
 
+        public static bool hasError = false;
+
         public static void Main(string[] args)
         {
             if (args.Length > 1)
             {
-                Console.WriteLine(CODEStrings.InvalidUsage);
+                Console.Error.WriteLine(CODEStrings.InvalidUsage);
                 Environment.Exit((int) ExitType.EXIT_ERR_USAGE);
             }
             else if (args.Length == 1)
@@ -41,10 +43,12 @@ namespace CODE_interpreter
                 byte[] bytes = File.ReadAllBytes(filePath);
                 string content = Encoding.UTF8.GetString(bytes);
                 ExecuteLine(content);
+
+                if (hasError) { Environment.Exit((int)ExitType.EXIT_ERR_SYNTAX); }
             } 
             else
             {
-                Console.WriteLine(CODEStrings.FileNotFoundL1 + filePath + "\n" + CODEStrings.FileNotFoundL2);
+                Console.Error.WriteLine(CODEStrings.FileNotFoundL1 + filePath + "\n" + CODEStrings.FileNotFoundL2);
                 Environment.Exit((int)ExitType.EXIT_ERR_FILE);
             }
         }
@@ -59,27 +63,29 @@ namespace CODE_interpreter
                 string line = reader.ReadLine();
                 if (line == null) break;
                 ExecuteLine(line);
+                hasError = false;
             }
         }
 
-        private static void ExecuteLine(string line)
+        private static void ExecuteLine(string source)
         {
-            List<Token> tokens = Tokenize(line);
+            Lexer l = new Lexer(source);
+            List<Token> tokens = l.GenerateTokens();
             foreach (Token t in tokens)
             {
                 Console.WriteLine(t);
             }
         }
 
-        private static List<Token> Tokenize(string source)
+        public static void ThrowError(int line, string message)
         {
-            List<Token> tokens = new List<Token>();
-            string[] words = source.Split(' ');
-            foreach (string word in words)
-            {
-                tokens.Add(new Token(word));
-            }
-            return tokens;
+            Report(line, "", message);
+        }
+
+        private static void Report(int line, string where, string message)
+        {
+            Console.Error.WriteLine($"[line {line}] Error{where}: {message}");
+            hasError = true;
         }
     }
 }

@@ -8,44 +8,53 @@ namespace CODE_interpreter.Parser
 {
     public class Token
     {
-        enum TokenType
+        public enum Type
         {
             // Reserved structure/control keywords
-            TK_BEGINCDE, TK_ENDCDE,
-            TK_IF, TK_ELIF, TK_ELSE,
-            TK_BEGINIF, TK_ENDIF,
-            TK_WHILE, TK_BEGINWH, TK_ENDWH,
-            TK_COMMENT, TK_EOF,
+            CODE, BEGIN_CODE, END_CODE,
+            IF, ELIF, ELSE,
+            BEGINIF, ENDIF,
+            WHILE, BEGIN_WHILE, END_WHILE,
+            BLOCK_START, BLOCK_END, EOF,
 
             // Input/output keywords
-            TK_DISPLAY, TK_SCAN,
+            DISPLAY, SCAN,
 
             // Keywords for basic operators
-            TK_ADD, TK_SUB, TK_MULT, TK_DIV, TK_MOD,
-            TK_GREATER, TK_LESSER,
-            TK_GEQUAL, TK_LEQUAL,
-            TK_EQUAL, TK_NOEQUAL,
-            TK_AND, TK_OR, TK_NOT,
+            ADD, SUB, MULT, DIV, MOD,
+            GREATER, LESSER,
+            GREATER_EQUAL, LESSER_EQUAL,
+            EQUAL, NOT_EQUAL,
+            AND, OR, NOT,
 
             // Other available operators (single-character operators)
-            TK_NEWLINE, TK_CONCAT,
-            TK_LPARA, TK_RPARA,
-            TK_LBRACKET, TK_RBRACKET,
+            NEWLINE, CONCAT, ASSIGNMENT,
+            LEFT_PARAGRAPH, RIGHT_PARAGRAPH,
+            LEFT_SBRACKET, RIGHT_SBRACKET,
 
             // Keyword for data types and literals
-            TK_IDENTIFIER,
-            TK_INT, TK_CHAR, TK_BOOL, TK_FLOAT,
-        }
-        public string Value { get; set; }
+            IDENTIFIER,
+            INT, CHAR, BOOL, FLOAT, STRING,
 
-        public Token(string value)
+            // Misc
+            COMMA, COLON
+        }
+        public Type CurrType { get; }
+        public string Lexeme { get; }
+        public object Literal { get; }
+        public int Line { get; }
+
+        public Token(Type type, string lexeme, object literal, int line)
         {
-            Value = value;
+            CurrType = type;
+            Lexeme = lexeme;
+            Literal = literal;
+            Line = line;
         }
 
         public override string ToString()
         {
-            return Value;
+            return $"{CurrType} {Lexeme} {Literal}";
         }
     }
 }
