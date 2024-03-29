@@ -1,0 +1,5 @@
+﻿BEGIN CODE
+	# This is a line that's going to be ignored by the interpreter.
+	# DISPLAY: "This is also a line not going to be run"
+	DISPLAY: "This one will though. Oh, hello world!"
+END CODE
