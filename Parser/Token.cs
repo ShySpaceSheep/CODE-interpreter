@@ -26,10 +26,11 @@ namespace CODE_interpreter.Parser
             GREATER_EQUAL, LESSER_EQUAL,
             EQUAL, NOT_EQUAL,
             AND, OR, NOT,
+            TRUE, FALSE, NIL,
 
             // Other available operators (single-character operators)
             NEWLINE, CONCAT, ASSIGNMENT,
-            LEFT_PARAGRAPH, RIGHT_PARAGRAPH,
+            LEFT_PARANTHESIS, RIGHT_PARENTHESIS,
             LEFT_SBRACKET, RIGHT_SBRACKET,
 
             // Keyword for data types and literals

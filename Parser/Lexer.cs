@@ -63,10 +63,10 @@ namespace CODE_interpreter.Parser
             switch (c)
             {
                 case '(':
-                    AddToken(Token.Type.LEFT_PARAGRAPH);
+                    AddToken(Token.Type.LEFT_PARANTHESIS);
                     break;
                 case ')':
-                    AddToken(Token.Type.RIGHT_PARAGRAPH);
+                    AddToken(Token.Type.RIGHT_PARENTHESIS);
                     break;
                 case '[':
                     AddToken(Token.Type.LEFT_SBRACKET);
