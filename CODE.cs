@@ -1,8 +1,10 @@
-﻿using CODE_interpreter.Parser;
+﻿using CODE_interpreter.AST;
+using CODE_interpreter.Parser;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using static CODE_interpreter.Interpreter;
 
 namespace CODE_interpreter
 {
@@ -17,7 +19,9 @@ namespace CODE_interpreter
             EXIT_ERR_FILE = 72,
         }
 
+        private static readonly Interpreter interpreter = new Interpreter();
         public static bool hasError = false;
+        public static bool hadRuntimeError = false;
 
         public static void Main(string[] args)
         {
@@ -44,7 +48,8 @@ namespace CODE_interpreter
                 string content = Encoding.UTF8.GetString(bytes);
                 ExecuteLine(content);
 
-                if (hasError) { Environment.Exit((int)ExitType.EXIT_ERR_SYNTAX); }
+                if (hasError) { Environment.Exit((int) ExitType.EXIT_ERR_SYNTAX); }
+                if (hadRuntimeError) { Environment.Exit((int)ExitType.EXIT_ERR_FILE); }
             } 
             else
             {
@@ -71,10 +76,14 @@ namespace CODE_interpreter
         {
             Lexer l = new Lexer(source);
             List<Token> tokens = l.GenerateTokens();
-            foreach (Token t in tokens)
-            {
-                Console.WriteLine(t);
-            }
+
+            CODE_interpreter.Parser.Parser parser = new CODE_interpreter.Parser.Parser(tokens);
+            Expression expression = parser.parse();
+
+            // Stop if there was a syntax error.
+            if (hasError) return;
+
+            interpreter.Interpret(expression);
         }
 
         public static void ThrowError(int line, string message)
@@ -86,6 +95,24 @@ namespace CODE_interpreter
         {
             Console.Error.WriteLine($"[line {line}] Error{where}: {message}");
             hasError = true;
+        }
+
+        public static void Error(Token token, String message)
+        {
+            if (token.CurrType == Token.Type.EOF)
+            {
+                Report(token.Line, " at end", message);
+            }
+            else
+            {
+                Report(token.Line, " at '" + token.Lexeme + "'", message);
+            }
+        }
+
+        public static void RuntimeError(RuntimeError error)
+        {
+            Console.Error.WriteLine(error.Message + "\n[line " + error.Token.Line + "]");
+            hadRuntimeError = true;
         }
     }
 }

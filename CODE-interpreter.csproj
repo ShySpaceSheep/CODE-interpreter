@@ -4,11 +4,12 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>CODE_interpreter_csharp</RootNamespace>
+    <StartupObject>CODE_interpreter.CODE</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="ASTGenerator\" />
     <Folder Include="Documentation\" />
+    <Folder Include="test\" />
   </ItemGroup>
 
 </Project>
