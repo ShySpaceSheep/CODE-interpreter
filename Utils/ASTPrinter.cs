@@ -1,9 +1,4 @@
-﻿using CODE_interpreter.Parser;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace CODE_interpreter.AST
 {
@@ -13,25 +8,35 @@ namespace CODE_interpreter.AST
         {
             return expr.Accept(this);
         }
-        public string VisitBinaryExpr(Expression.Binary expr)
+        public string VisitBinaryExpression(Expression.Binary expr)
         {
             return Parenthesize(expr.Operator.Lexeme, expr.Left, expr.Right);
         }
 
-        public string VisitGroupingExpr(Expression.Grouping expr)
+        public string VisitGroupingExpression(Expression.Grouping expr)
         {
-            return Parenthesize("group", expr.Expression);
+            return Parenthesize("group", expr.Expr);
         }
 
-        public string VisitLiteralExpr(Expression.Literal expr)
+        public string VisitLiteralExpression(Expression.Literal expr)
         {
             if (expr.Value == null) return "nil";
             return expr.Value.ToString();
         }
 
-        public string VisitUnaryExpr(Expression.Unary expr)
+        public string VisitUnaryExpression(Expression.Unary expr)
         {
             return Parenthesize(expr.Operator.Lexeme, expr.Right);
+        }
+
+        public string VisitVariableExpression(Expression.Variable var)
+        {
+            return var.ToString();
+        }
+
+        public string VisitAssignExpression(Expression.Assign var)
+        {
+            return var.ToString();
         }
 
         private string Parenthesize(string name, params Expression[] exprs)
