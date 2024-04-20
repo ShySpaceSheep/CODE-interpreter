@@ -1,6 +1,6 @@
-﻿using CODE_interpreter.Parser;
-using System;
-using System.Collections.Generic;
+﻿using System;
+
+using CODE_interpreter.Analyzers;
 
 namespace CODE_interpreter.AST
 {
@@ -8,76 +8,104 @@ namespace CODE_interpreter.AST
     {
         public interface IVisitor<R>
         {
-            R VisitBinaryExpr(Binary expr);
-            R VisitGroupingExpr(Grouping expr);
-            R VisitLiteralExpr(Literal expr);
-            R VisitUnaryExpr(Unary expr);
+            R VisitAssignExpression(Assign expression);
+            R VisitBinaryExpression(Binary expression);
+            R VisitGroupingExpression(Grouping expression);
+            R VisitLiteralExpression(Literal expression);
+            R VisitUnaryExpression(Unary expression);
+            R VisitVariableExpression(Variable expression);
         }
+        public class Assign : Expression
+        {
+            public Assign(Token Name, Expression Value)
+            {
+                this.Name = Name;
+                this.Value = Value;
+            }
 
+            public override R Accept<R>(IVisitor<R> visitor)
+            {
+                return visitor.VisitAssignExpression(this);
+            }
+
+         public readonly Token Name;
+         public readonly Expression Value;
+        }
         public class Binary : Expression
         {
-            public Binary(Expression left, Token op, Expression right)
+            public Binary(Expression Left, Token Operator, Expression Right)
             {
-                this.Left = left;
-                this.Operator = op;
-                this.Right = right;
+                this.Left = Left;
+                this.Operator = Operator;
+                this.Right = Right;
             }
 
             public override R Accept<R>(IVisitor<R> visitor)
             {
-                return visitor.VisitBinaryExpr(this);
+                return visitor.VisitBinaryExpression(this);
             }
 
-            public readonly Expression Left;
-            public readonly Token Operator;
-            public readonly Expression Right;
+         public readonly Expression Left;
+         public readonly Token Operator;
+         public readonly Expression Right;
         }
-
         public class Grouping : Expression
         {
-            public Grouping(Expression expression)
+            public Grouping(Expression Expr)
             {
-                this.Expression = expression;
+                this.Expr = Expr;
             }
 
             public override R Accept<R>(IVisitor<R> visitor)
             {
-                return visitor.VisitGroupingExpr(this);
+                return visitor.VisitGroupingExpression(this);
             }
 
-            public readonly Expression Expression;
+         public readonly Expression Expr;
         }
-
         public class Literal : Expression
         {
-            public Literal(object value)
+            public Literal(Object Value)
             {
-                this.Value = value;
+                this.Value = Value;
             }
 
             public override R Accept<R>(IVisitor<R> visitor)
             {
-                return visitor.VisitLiteralExpr(this);
+                return visitor.VisitLiteralExpression(this);
             }
 
-            public readonly object Value;
+         public readonly Object Value;
         }
-
         public class Unary : Expression
         {
-            public Unary(Token op, Expression right)
+            public Unary(Token Operator, Expression Right)
             {
-                this.Operator = op;
-                this.Right = right;
+                this.Operator = Operator;
+                this.Right = Right;
             }
 
             public override R Accept<R>(IVisitor<R> visitor)
             {
-                return visitor.VisitUnaryExpr(this);
+                return visitor.VisitUnaryExpression(this);
             }
 
-            public readonly Token Operator;
-            public readonly Expression Right;
+         public readonly Token Operator;
+         public readonly Expression Right;
+        }
+        public class Variable : Expression
+        {
+            public Variable(Token Name)
+            {
+                this.Name = Name;
+            }
+
+            public override R Accept<R>(IVisitor<R> visitor)
+            {
+                return visitor.VisitVariableExpression(this);
+            }
+
+         public readonly Token Name;
         }
 
         public abstract R Accept<R>(IVisitor<R> visitor);
