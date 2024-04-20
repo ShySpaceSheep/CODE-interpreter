@@ -1,10 +1,11 @@
-﻿using CODE_interpreter.AST;
-using CODE_interpreter.Parser;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
 using System.Text;
-using static CODE_interpreter.Interpreter;
+using System.Collections.Generic;
+
+using CODE_interpreter.CODEStrings;
+using CODE_interpreter.Analyzers;
+using CODE_interpreter.AST;
 
 namespace CODE_interpreter
 {
@@ -19,100 +20,86 @@ namespace CODE_interpreter
             EXIT_ERR_FILE = 72,
         }
 
-        private static readonly Interpreter interpreter = new Interpreter();
-        public static bool hasError = false;
-        public static bool hadRuntimeError = false;
+        private static readonly Interpreter Interpreter = new Interpreter();
+        public static string CurrentFile = "<stdin>";
 
         public static void Main(string[] args)
         {
             if (args.Length > 1)
             {
-                Console.Error.WriteLine(CODEStrings.InvalidUsage);
-                Environment.Exit((int) ExitType.EXIT_ERR_USAGE);
+                StdError.ThrowArgumentError();
             }
             else if (args.Length == 1)
             {
-                RunSourceFile(args[0]);
+                RunFromFile(args[0]);
             }
             else
             {
-                RunInteractive();
+                RunFromREPL();
             }
         }
 
-        private static void RunSourceFile(string filePath)
+        private static void RunFromFile(string filedir)
         {
-            if (File.Exists(filePath))
+            if (File.Exists(filedir))
             {
-                byte[] bytes = File.ReadAllBytes(filePath);
-                string content = Encoding.UTF8.GetString(bytes);
-                ExecuteLine(content);
+                CurrentFile = Path.GetFullPath(filedir);
+                byte[] bytes = File.ReadAllBytes(filedir);
+                string source = Encoding.UTF8.GetString(bytes);
+                Execute(source);
 
-                if (hasError) { Environment.Exit((int) ExitType.EXIT_ERR_SYNTAX); }
-                if (hadRuntimeError) { Environment.Exit((int)ExitType.EXIT_ERR_FILE); }
+                if (StdError.HasSyntaxError) { System.Environment.Exit((int) ExitType.EXIT_ERR_SYNTAX); }
+                if (StdError.HasRuntimeError) { System.Environment.Exit((int) ExitType.EXIT_ERR_FILE); }
             } 
             else
             {
-                Console.Error.WriteLine(CODEStrings.FileNotFoundL1 + filePath + "\n" + CODEStrings.FileNotFoundL2);
-                Environment.Exit((int)ExitType.EXIT_ERR_FILE);
+                StdError.ThrowFileNotFound(filedir);
             }
         }
 
-        private static void RunInteractive()
+        private static void RunFromREPL()
         {
-            Console.WriteLine(CODEStrings.InterpreterREPL);
+            Console.WriteLine(Info.REPLMessage());
             StreamReader reader = new StreamReader(Console.OpenStandardInput());
+
             for (;;)
             {
+                // Main loop just attends to expressions inputted by the user.
                 Console.Write(">>> ");
                 string line = reader.ReadLine();
+                
+                // Once we find a valid opening, all statements are now allowed.
+                // Since a CODE source code is structured as a one big block of statement, we'll have another loop listening for it.
+                if (line == "BEGIN CODE")
+                {
+                    string source = "BEGIN CODE";
+                    for (;;)
+                    {
+                        Console.Write("... ");
+                        string srcLine = reader.ReadLine();
+
+                        source += System.Environment.NewLine + srcLine;
+                        if (srcLine == "END CODE") { break; }
+                    }
+                    Execute(source);
+                    StdError.HasSyntaxError = false;
+                }
+
                 if (line == null) break;
-                ExecuteLine(line);
-                hasError = false;
+
+                //Execute(line);
+                //StdError.HasSyntaxError = false;
             }
         }
 
-        private static void ExecuteLine(string source)
+        private static void Execute(string source)
         {
-            Lexer l = new Lexer(source);
-            List<Token> tokens = l.GenerateTokens();
+            List<Token> tokens = new Lexer(source).GenerateTokenStream();
+            Parser parser = new Parser(tokens);
+            List<Statement> statements = parser.Parse();
 
-            CODE_interpreter.Parser.Parser parser = new CODE_interpreter.Parser.Parser(tokens);
-            Expression expression = parser.parse();
-
-            // Stop if there was a syntax error.
-            if (hasError) return;
-
-            interpreter.Interpret(expression);
-        }
-
-        public static void ThrowError(int line, string message)
-        {
-            Report(line, "", message);
-        }
-
-        private static void Report(int line, string where, string message)
-        {
-            Console.Error.WriteLine($"[line {line}] Error{where}: {message}");
-            hasError = true;
-        }
-
-        public static void Error(Token token, String message)
-        {
-            if (token.CurrType == Token.Type.EOF)
-            {
-                Report(token.Line, " at end", message);
-            }
-            else
-            {
-                Report(token.Line, " at '" + token.Lexeme + "'", message);
-            }
-        }
-
-        public static void RuntimeError(RuntimeError error)
-        {
-            Console.Error.WriteLine(error.Message + "\n[line " + error.Token.Line + "]");
-            hadRuntimeError = true;
+            if (StdError.HasSyntaxError) return;
+            Interpreter.Interpret(statements);
         }
     }
 }
