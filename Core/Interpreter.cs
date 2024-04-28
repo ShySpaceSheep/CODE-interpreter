@@ -31,6 +31,20 @@ namespace CODE_interpreter
             return expr.Value;
         }
 
+        public Object VisitLogicalExpression(Expression.Logical expr)
+        {
+            Object left = Evaluate(expr.Left);
+
+            if (expr.Operator.TokenType == Token.Type.OR) {
+                if (IsTruthy(left)) return left;
+            } else
+            {
+                if (!IsTruthy(left)) return left;
+            }
+
+            return Evaluate(expr.Right);
+        }
+
         public Object VisitGroupingExpression(Expression.Grouping expr)
         {
             return Evaluate(expr.Expr);
@@ -165,6 +179,11 @@ namespace CODE_interpreter
             return null;
         }
 
+        public Object VisitScannerStatement(Statement.Scanner sc)
+        {
+            return null;
+        }
+
         public Object VisitVarStatement(Statement.Var stmt)
         {
             object value = null;
@@ -174,6 +193,21 @@ namespace CODE_interpreter
             }
 
             Env.DefineVar(stmt.Name, value);
+            return null;
+        }
+
+        public Object VisitVarListStatement(Statement.VarList declarations)
+        {
+            foreach (Statement.Var stmt in declarations.Declarations)
+            {
+                object value = null;
+                if (stmt.Initializer != null)
+                {
+                    value = Evaluate(stmt.Initializer);
+                }
+
+                Env.DefineVar(stmt.Name, value);
+            }
             return null;
         }
 
@@ -222,6 +256,10 @@ namespace CODE_interpreter
                     if (left is int && right is int) { return (int)left * (int)right; }
                     if (left is double && right is double) { return (double)left * (double)right; }
                     return (double)left * (double)right;
+                case Token.Type.MOD:
+                    CheckNumberOperands(expr.Operator, left, right);
+                    if (left is not int && right is not int) { throw new StdError.RuntimeError(expr.Operator, "OperationError: Operands must be int"); }
+                    return (int) left % (int) right;
                 case Token.Type.GREATER:
                     CheckNumberOperands(expr.Operator, left, right);
                     if (left is int && right is int) { return (int)left > (int)right; }
