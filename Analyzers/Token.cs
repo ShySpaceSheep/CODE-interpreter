@@ -20,7 +20,7 @@
 
             // Other available operators (single-character operators)
             NEWLINE, CONCAT, ASSIGNMENT,
-            LEFT_PARANTHESIS, RIGHT_PARENTHESIS,
+            LEFT_PARENTHESIS, RIGHT_PARENTHESIS,
             LEFT_SBRACKET, RIGHT_SBRACKET,
 
             // Keyword for data types and literals
@@ -30,7 +30,6 @@
 
             // Misc
             ENDLINE, COMMA, COLON,
-            RIGHT_PARANTHESIS
         }
 
         public Type TokenType { get; }
