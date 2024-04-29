@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 using CODE_interpreter.Analyzers;
 
@@ -12,6 +13,7 @@ namespace CODE_interpreter.AST
             R VisitBinaryExpression(Binary expression);
             R VisitGroupingExpression(Grouping expression);
             R VisitLiteralExpression(Literal expression);
+            R VisitLogicalExpression(Logical expression);
             R VisitUnaryExpression(Unary expression);
             R VisitVariableExpression(Variable expression);
         }
@@ -76,6 +78,24 @@ namespace CODE_interpreter.AST
             }
 
          public readonly Object Value;
+        }
+        public class Logical : Expression
+        {
+            public Logical(Expression Left, Token Operator, Expression Right)
+            {
+                this.Left = Left;
+                this.Operator = Operator;
+                this.Right = Right;
+            }
+
+            public override R Accept<R>(IVisitor<R> visitor)
+            {
+                return visitor.VisitLogicalExpression(this);
+            }
+
+         public readonly Expression Left;
+         public readonly Token Operator;
+         public readonly Expression Right;
         }
         public class Unary : Expression
         {
