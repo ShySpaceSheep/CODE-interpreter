@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 using CODE_interpreter.Analyzers;
 
@@ -13,7 +14,9 @@ namespace CODE_interpreter.AST
             R VisitExpressionStatement(Expression statement);
             R VisitIfStatement(If statement);
             R VisitPrintStatement(Print statement);
+            R VisitScannerStatement(Scanner statement);
             R VisitVarStatement(Var statement);
+            R VisitVarListStatement(VarList statement);
             R VisitWhileStatement(While statement);
         }
         public class IfBlock : Statement
@@ -90,6 +93,20 @@ namespace CODE_interpreter.AST
 
          public readonly AST.Expression Expr;
         }
+        public class Scanner : Statement
+        {
+            public Scanner(AST.Expression Expr)
+            {
+                this.Expr = Expr;
+            }
+
+            public override R Accept<R>(IVisitor<R> visitor)
+            {
+                return visitor.VisitScannerStatement(this);
+            }
+
+         public readonly AST.Expression Expr;
+        }
         public class Var : Statement
         {
             public Var(Token Name, AST.Expression Initializer)
@@ -105,6 +122,20 @@ namespace CODE_interpreter.AST
 
          public readonly Token Name;
          public readonly AST.Expression Initializer;
+        }
+        public class VarList : Statement
+        {
+            public VarList(List<Var> Declarations)
+            {
+                this.Declarations = Declarations;
+            }
+
+            public override R Accept<R>(IVisitor<R> visitor)
+            {
+                return visitor.VisitVarListStatement(this);
+            }
+
+         public readonly List<Var> Declarations;
         }
         public class While : Statement
         {
