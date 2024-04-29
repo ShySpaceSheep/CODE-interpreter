@@ -24,6 +24,11 @@ namespace CODE_interpreter.AST
             return expr.Value.ToString();
         }
 
+        public string VisitLogicalExpression(Expression.Logical expr)
+        {
+            return expr.ToString();
+        }
+
         public string VisitUnaryExpression(Expression.Unary expr)
         {
             return Parenthesize(expr.Operator.Lexeme, expr.Right);

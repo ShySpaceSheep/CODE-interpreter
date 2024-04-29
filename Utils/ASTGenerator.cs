@@ -16,6 +16,7 @@ namespace CODE_interpreter.Utils
                 "Binary   : Expression Left, Token Operator, Expression Right",
                 "Grouping : Expression Expr",
                 "Literal  : Object Value",
+                "Logical  : Expression Left, Token Operator, Expression Right",
                 "Unary    : Token Operator, Expression Right",
                 "Variable : Token Name"
             });
@@ -26,7 +27,9 @@ namespace CODE_interpreter.Utils
                 "Expression : AST.Expression Expr",
                 "If         : AST.Expression Condition, List<Statement> ThenBranch, List<Statement> ElseBranch",
                 "Print      : AST.Expression Expr",
+                "Scanner    : AST.Expression Expr",
                 "Var        : Token Name, AST.Expression Initializer",
+                "VarList    : List<Var> Declarations",
                 "While      : AST.Expression Condition, List<Statement> Body"
             });
         }
