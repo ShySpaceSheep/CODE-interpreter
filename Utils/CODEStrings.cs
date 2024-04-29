@@ -2,7 +2,7 @@
 {
     public static class Info
     {
-        private const string REPLHeader = "CODE 0.2.0 by Hitsuji Labs - https://github.com/ShySpaceSheep/CODE-interpreter";
+        private const string REPLHeader = "CODE 0.3.2-alpha by Hitsuji Labs - https://github.com/ShySpaceSheep/CODE-interpreter";
         private const string REPLSubheader = "Type \"help\" or \"credits\" for more information.";
         public static string REPLMessage()
         {
