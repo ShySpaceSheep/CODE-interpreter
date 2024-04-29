@@ -30,7 +30,7 @@ namespace CODE_interpreter.Analyzers
             {"SCAN", Token.Type.SCAN},
             {"AND", Token.Type.AND},
             {"OR", Token.Type.OR},
-            {"NOT", Token.Type.NOT},
+            {"NOT", Token.Type.NOT}
         };
 
         public Lexer(string source)
@@ -70,16 +70,13 @@ namespace CODE_interpreter.Analyzers
                     AddToken(Token.Type.MOD);
                     break;
                 case '(':
-                    AddToken(Token.Type.LEFT_PARANTHESIS);
+                    AddToken(Token.Type.LEFT_PARENTHESIS);
                     break;
                 case ')':
                     AddToken(Token.Type.RIGHT_PARENTHESIS);
                     break;
                 case '[':
-                    AddToken(Token.Type.LEFT_SBRACKET);
-                    break;
-                case ']':
-                    AddToken(Token.Type.RIGHT_SBRACKET);
+                    EscapeCharacter();
                     break;
                 case '=':
                     AddToken(Match('=') ? Token.Type.EQUAL : Token.Type.ASSIGNMENT);
@@ -120,13 +117,14 @@ namespace CODE_interpreter.Analyzers
                     GetStringLiteral();
                     break;
                 case '\'':
-                    //GetCharLiteral();
+                    GetCharLiteral();
                     break;
                 case ' ':
                 case '\r':
                 case '\t':
                     break;
                 case '\n':
+                    //AddToken(Token.Type.ENDLINE);
                     line++;
                     break;
                 default:
@@ -241,6 +239,60 @@ namespace CODE_interpreter.Analyzers
             if (IsEndOfInput())
             {
                 StdError.ThrowLexerError(line, "Unterminated string");
+                return;
+            }
+
+            Advance();
+            string value = Source.Substring(start + 1, current - 1 - start - 1);
+
+            // There's a specific weird choice about choosing to do boolean values within string constraints.
+            // Make an exception for literals who simply identify as "TRUE" and "FALSE".
+            if (value == "TRUE")
+            {
+                AddToken(Token.Type.TRUE);
+            }
+            else if (value == "FALSE")
+            {
+                AddToken(Token.Type.FALSE);
+            }
+            else
+            {
+                AddToken(Token.Type.STRING, value);
+            }
+        }
+        
+        private void GetCharLiteral()
+        {
+            if (LookAhead() == '\'' && !IsEndOfInput())
+            {
+                Advance();
+                StdError.ThrowLexerError(line, "Empty char constant");
+                return;
+            }
+ 
+            char value = Source[current];
+            AddToken(Token.Type.VAL_CHAR, value);
+            Advance();
+
+            if (Advance() != '\'')
+            {
+                StdError.ThrowLexerError(line, "Expected terminator for char constant");
+                return;
+            }
+        }
+
+        // I don't know how useful this is as of now.
+        private void EscapeCharacter()
+        {
+            while (LookAhead() != ']' && !IsEndOfInput())
+            {
+                if (LookAhead() == '\n') { line++; }
+                Advance();
+            }
+
+            if (IsEndOfInput())
+            {
+                StdError.ThrowLexerError(line, "Unterminated escape string");
                 return;
             }
 
