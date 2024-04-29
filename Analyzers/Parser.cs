@@ -60,9 +60,9 @@ namespace CODE_interpreter.Analyzers
             try
             {
                 if (Match(Token.Type.VAR_INT)) return IntVarDeclaration();
-                //if (Match(Token.Type.VAR_FLOAT)) return FloatVarDeclaration();
-                //if (Match(Token.Type.VAR_CHAR)) return CharVarDeclaration();
-                //if (Match(Token.Type.VAR_BOOL)) return BoolVarDeclaration();
+                if (Match(Token.Type.VAR_FLOAT)) return FloatVarDeclaration();
+                if (Match(Token.Type.VAR_CHAR)) return CharVarDeclaration();
+                if (Match(Token.Type.VAR_BOOL)) return BoolVarDeclaration();
                 return Statement();
             }
             catch (StdError.ParseError e)
@@ -81,19 +81,26 @@ namespace CODE_interpreter.Analyzers
                 if (Match(Token.Type.COLON)) return PrintStatement();
                 throw StdError.ThrowParseError(Previous(), "Expected ':'");
             }
+            /*
+            if (Match(Token.Type.SCAN))
+            {
+                if (Match(Token.Type.COLON)) return ScanStatement();
+                throw StdError.ThrowParseError(Previous(), "Expected ':'");
+            }*/ 
 
             return ExpressionStatement();
         }
 
         private Statement IfStatement()
         {
-            Consume(Token.Type.LEFT_PARANTHESIS, "Expect '(' after 'if'.");
+            Consume(Token.Type.LEFT_PARENTHESIS, "Expect '(' after 'if'.");
             Expression condition = Expression();
             Consume(Token.Type.RIGHT_PARENTHESIS, "Expect ')' after 'if'.");
 
 
             List<Statement> thenBranch = IfBlock();
             List<Statement> elseBranch = null;
+
             if (Match(Token.Type.ELSE))
             {
                 elseBranch = IfBlock();
@@ -108,23 +115,107 @@ namespace CODE_interpreter.Analyzers
             return new Statement.Print(value);
         }
 
+        /*private Statement ScanStatement()
+        {
+
+        }*/
+
         private Statement IntVarDeclaration()
         {
-            Token name = Consume(Token.Type.IDENTIFIER, "Expect variable name.");
-
-            Expression initializer = null;
-            if (Match(Token.Type.ASSIGNMENT))
+            List<Statement.Var> declarations_list = new List<Statement.Var>();
+            for(; ; )
             {
-                initializer = Expression();
-            }
+                Token name = Consume(Token.Type.IDENTIFIER, "Expect variable name.");
 
-            //Consume(SEMICOLON, "Expect ';' after variable declaration.");
-            return new Statement.Var(name, initializer);
+                Expression initializer = null;
+                if (Match(Token.Type.ASSIGNMENT))
+                {
+                    initializer = IntExpression();
+                }
+
+                declarations_list.Add(new Statement.Var(name, initializer));
+                if (Match(Token.Type.COMMA))
+                {
+                    continue;
+                }
+
+                break;
+            }
+            return new Statement.VarList(declarations_list);
+        }
+
+        private Statement FloatVarDeclaration()
+        {
+            List<Statement.Var> declarations_list = new List<Statement.Var>();
+            for (; ; )
+            {
+                Token name = Consume(Token.Type.IDENTIFIER, "Expect variable name.");
+
+                Expression initializer = null;
+                if (Match(Token.Type.ASSIGNMENT))
+                {
+                    initializer = FloatExpression();
+                }
+                declarations_list.Add(new Statement.Var(name, initializer));
+                if (Match(Token.Type.COMMA))
+                {
+                    continue;
+                }
+
+                break;
+            }
+            return new Statement.VarList(declarations_list);
+        }
+
+        private Statement CharVarDeclaration()
+        {
+            List<Statement.Var> declarations_list = new List<Statement.Var>();
+            for (; ; )
+            {
+                Token name = Consume(Token.Type.IDENTIFIER, "Expect variable name.");
+
+                Expression initializer = null;
+                if (Match(Token.Type.ASSIGNMENT))
+                {
+                    initializer = CharExpression();
+                }
+                declarations_list.Add(new Statement.Var(name, initializer));
+                if (Match(Token.Type.COMMA))
+                {
+                    continue;
+                }
+
+                break;
+            }
+            return new Statement.VarList(declarations_list);
+        }
+
+        private Statement BoolVarDeclaration()
+        {
+            List<Statement.Var> declarations_list = new List<Statement.Var>();
+            for (; ; )
+            {
+                Token name = Consume(Token.Type.IDENTIFIER, "Expect variable name.");
+
+                Expression initializer = null;
+                if (Match(Token.Type.ASSIGNMENT))
+                {
+                    initializer = BoolExpression();
+                }
+                declarations_list.Add(new Statement.Var(name, initializer));
+                if (Match(Token.Type.COMMA))
+                {
+                    continue;
+                }
+
+                break;
+            }
+            return new Statement.VarList(declarations_list);
         }
 
         private Statement WhileStatement()
         {
-            Consume(Token.Type.LEFT_PARANTHESIS, "Expect '(' after 'while'.");
+            Consume(Token.Type.LEFT_PARENTHESIS, "Expect '(' after 'while'.");
             Expression condition = Expression();
             Consume(Token.Type.RIGHT_PARENTHESIS, "Expect ')' after condition.");
             List<Statement> body = WhileBlock();
@@ -142,7 +233,7 @@ namespace CODE_interpreter.Analyzers
         {
             List<Statement> statements = new List<Statement>();
             Consume(Token.Type.BLOCK_START, "SyntaxError: Expected IF block.");
-            Consume(Token.Type.IF, "SyntaxError: Expected IF block.");
+            Consume(Token.Type.IF, "SyntaxError: Expected IF block");
 
             while (!Check(Token.Type.BLOCK_END) && !IsAtEnd())
             {
@@ -174,8 +265,7 @@ namespace CODE_interpreter.Analyzers
 
         private Expression Assignment()
         {
-            Expression expr = Equality();
-
+            Expression expr = OrStatement();
             if (Match(Token.Type.ASSIGNMENT))
             {
                 Token equals = Previous();
@@ -187,6 +277,31 @@ namespace CODE_interpreter.Analyzers
                 }
 
                 StdError.ThrowParseError(equals, "Invalid assignment target.");
+            }
+            return expr;
+        }
+
+        private Expression OrStatement()
+        {
+            Expression expr = AndStatement();
+            while (Match(Token.Type.OR))
+            {
+                Token op = Previous();
+                Expression right = AndStatement();
+                expr = new Expression.Logical(expr, op, right);
+            }
+            return expr;
+        }
+
+        private Expression AndStatement()
+        {
+            Expression expr = Equality();
+
+            while (Match(Token.Type.AND))
+            {
+                Token op = Previous();
+                Expression right = Equality();
+                expr = new Expression.Logical(expr, op, right);
             }
 
             return expr;
@@ -293,7 +408,7 @@ namespace CODE_interpreter.Analyzers
         {
             Expression expr = Factor();
 
-            while (Match(Token.Type.SUB, Token.Type.ADD, Token.Type.CONCAT))
+            while (Match(Token.Type.SUB, Token.Type.ADD, Token.Type.CONCAT, Token.Type.MOD))
             {
                 Token op = Previous();
                 Expression right = Factor();
@@ -329,13 +444,51 @@ namespace CODE_interpreter.Analyzers
             return Primary();
         }
 
+        private Expression IntExpression()
+        {
+            if (Match(Token.Type.VAL_INT))
+            {
+                return new Expression.Literal(Previous().Literal);
+            }
+
+            throw StdError.ThrowParseError(LookAhead(), "Expected int expression.");
+        }
+
+        private Expression FloatExpression()
+        {
+            if (Match(Token.Type.VAL_FLOAT))
+            {
+                return new Expression.Literal(Previous().Literal);
+            }
+
+            throw StdError.ThrowParseError(LookAhead(), "Expected float expression.");
+        }
+
+        private Expression CharExpression()
+        {
+            if (Match(Token.Type.VAL_CHAR))
+            {
+                return new Expression.Literal(Previous().Literal);
+            }
+
+            throw StdError.ThrowParseError(LookAhead(), "Expected char expression.");
+        }
+
+        private Expression BoolExpression()
+        {
+            if (Match(Token.Type.FALSE)) return new Expression.Literal(false);
+            if (Match(Token.Type.TRUE)) return new Expression.Literal(true);
+
+            throw StdError.ThrowParseError(LookAhead(), "Expected boolean expression.");
+        }
+
         private Expression Primary()
         {
             if (Match(Token.Type.FALSE)) return new Expression.Literal(false);
             if (Match(Token.Type.TRUE)) return new Expression.Literal(true);
             if (Match(Token.Type.NIL)) return new Expression.Literal(null);
 
-            if (Match(Token.Type.VAL_INT, Token.Type.VAL_FLOAT, Token.Type.STRING))
+            if (Match(Token.Type.VAL_INT, Token.Type.VAL_FLOAT, Token.Type.VAL_CHAR, Token.Type.STRING))
             {
                 return new Expression.Literal(Previous().Literal);
             }
@@ -345,7 +498,7 @@ namespace CODE_interpreter.Analyzers
                 return new Expression.Variable(Previous());
             }
 
-            if (Match(Token.Type.LEFT_PARANTHESIS))
+            if (Match(Token.Type.LEFT_PARENTHESIS))
             {
                 Expression expr = Expression();
                 Consume(Token.Type.RIGHT_PARENTHESIS, "Expect ')' after expression.");
