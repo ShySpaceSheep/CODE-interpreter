@@ -1,9 +1,9 @@
 ﻿using System;
 
-using CODE_interpreter.CODEStrings;
-using CODE_interpreter.Analyzers;
+using CODEInterpreter.Strings;
+using CODEInterpreter.Analyzers;
 
-namespace CODE_interpreter
+namespace CODEInterpreter.Errors
 {
     public static class StdError
     {
@@ -29,7 +29,7 @@ namespace CODE_interpreter
         {
             Console.WriteLine($"In file \"{CODE.CurrentFile}\" [Line {line}]");
             Console.Error.WriteLine($"Error {where}: {message}");
-            StdError.HasSyntaxError = true;
+            HasSyntaxError = true;
         }
         public static void ThrowLexerError(int line, string message)
         {
@@ -59,7 +59,7 @@ namespace CODE_interpreter
         public static void ThrowArgumentError()
         {
             Console.Error.WriteLine(UsageError.ArgumentError());
-            System.Environment.Exit((int) CODE.ExitType.EXIT_ERR_USAGE);
+            System.Environment.Exit((int) CODE.ExitType.EX_ARGS_ERR);
         }
         public static void ThrowFileNotFound(string filepath)
         {
