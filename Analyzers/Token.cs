@@ -1,4 +1,4 @@
-﻿namespace CODE_interpreter.Analyzers
+﻿namespace CODEInterpreter.Analyzers
 {
     public class Token
     {
@@ -7,6 +7,7 @@
             // Reserved structure/control keywords
             CODE, BLOCK_START, BLOCK_END, EOF,
             IF, ELIF, ELSE, WHILE,
+            BREAK, CONTINUE,
             
             // Input/output keywords
             DISPLAY, SCAN,
@@ -43,10 +44,6 @@
             Lexeme = lexeme;
             Literal = literal;
             Line = line;
-        }
-        public override string ToString()
-        {
-            return TokenType.ToString();
         }
     }
 }
