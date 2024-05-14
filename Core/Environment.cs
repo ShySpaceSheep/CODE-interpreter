@@ -1,36 +1,38 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using CODE_interpreter.CODEStrings;
-using CODE_interpreter.Analyzers;
+using CODEInterpreter.Analyzers;
+using CODEInterpreter.Errors;
+using CODEInterpreter.Strings;
 
-namespace CODE_interpreter
+namespace CODEInterpreter
 {
     public class Environment
     {
-        private readonly Dictionary<string, object> VarMemory = new Dictionary<string, object>();
+        private readonly Dictionary<string, object> _memory = new();
 
         public void DefineVar(Token name, Object value)
         {
-            if (VarMemory.ContainsKey(name.Lexeme))
+            if (_memory.ContainsKey(name.Lexeme))
             {
                 throw new StdError.RuntimeError(name, NameError.RedefinedVar(name.Lexeme));
             }
-            VarMemory.Add(name.Lexeme, value);
+            _memory.Add(name.Lexeme, value);
         }
+
         public void Assign(Token name, Object value)
         {
-            if (VarMemory.ContainsKey(name.Lexeme))
+            if (_memory.ContainsKey(name.Lexeme))
             {
-                VarMemory[name.Lexeme] = value;
+                _memory[name.Lexeme] = value;
                 return;
             }
-
             throw new StdError.RuntimeError(name, NameError.UndefinedVar(name.Lexeme));
         }
+
         public object Get(Token name)
         {
-            if (VarMemory.TryGetValue(name.Lexeme, out object value)) { return value; }
+            if (_memory.TryGetValue(name.Lexeme, out object value)) { return value; }
             throw new StdError.RuntimeError(name, NameError.UndefinedVar(name.Lexeme));
         }
     }

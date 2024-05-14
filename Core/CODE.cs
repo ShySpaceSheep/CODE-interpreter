@@ -3,27 +3,29 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 
-using CODE_interpreter.CODEStrings;
-using CODE_interpreter.Analyzers;
-using CODE_interpreter.AST;
+using CODEInterpreter.AST;
+using CODEInterpreter.Strings;
+using CODEInterpreter.Analyzers;
+using CODEInterpreter.Errors;
 
-namespace CODE_interpreter
+namespace CODEInterpreter
 {
     public class CODE
     {
         [Flags]
         public enum ExitType: int
         {
-            EXIT_SUCCESS = 0,
-            EXIT_ERR_USAGE = 64,
-            EXIT_ERR_SYNTAX = 65,
+            EX_SUCCESS = 0,
+            EX_ARGS_ERR = 64,
+            EX_SYNTAX_ERR = 65,
+            EX_FILE_ERR = 69,
             EXIT_ERR_FILE = 72,
         }
 
-        private static readonly Interpreter Interpreter = new Interpreter();
-        public static string CurrentFile = "<stdin>";
+        private static readonly Interpreter _interpreter = new();
+        private static string _currentFile = "<stdin>";
 
-        public static void Main(string[] args)
+        public static int Main(string[] args)
         {
             if (args.Length > 1)
             {
@@ -37,30 +39,26 @@ namespace CODE_interpreter
             {
                 RunFromREPL();
             }
+
+            return (int) ExitType.EX_SUCCESS;
         }
 
         private static void RunFromFile(string filedir)
         {
-            if (File.Exists(filedir))
-            {
-                CurrentFile = Path.GetFullPath(filedir);
-                byte[] bytes = File.ReadAllBytes(filedir);
-                string source = Encoding.UTF8.GetString(bytes);
-                Execute(source);
+            if (!File.Exists(filedir)) { StdError.ThrowFileNotFound(filedir); }
 
-                if (StdError.HasSyntaxError) { System.Environment.Exit((int) ExitType.EXIT_ERR_SYNTAX); }
-                if (StdError.HasRuntimeError) { System.Environment.Exit((int) ExitType.EXIT_ERR_FILE); }
-            } 
-            else
-            {
-                StdError.ThrowFileNotFound(filedir);
-            }
+            _currentFile = Path.GetFullPath(filedir);
+            byte[] bytes = File.ReadAllBytes(filedir);
+            string source = Encoding.UTF8.GetString(bytes);
+            Execute(source);
+
+            if (StdError.HasSyntaxError) { System.Environment.Exit((int) ExitType.EX_SYNTAX_ERR); }
         }
 
         private static void RunFromREPL()
         {
             Console.WriteLine(Info.REPLMessage());
-            StreamReader reader = new StreamReader(Console.OpenStandardInput());
+            StreamReader reader = new(Console.OpenStandardInput());
 
             for (;;)
             {
@@ -95,11 +93,16 @@ namespace CODE_interpreter
         private static void Execute(string source)
         {
             List<Token> tokens = new Lexer(source).GenerateTokenStream();
-            Parser parser = new Parser(tokens);
+            Parser parser = new(tokens);
             List<Statement> statements = parser.Parse();
 
             if (StdError.HasSyntaxError) return;
-            Interpreter.Interpret(statements);
+            _interpreter.Interpret(statements);
+        }
+
+        public static string CurrentFile
+        {
+            get { return _currentFile; }
         }
     }
 }
