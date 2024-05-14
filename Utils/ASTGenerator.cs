@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace CODE_interpreter.Utils
+namespace CODEInterpreter.Utils
 {
     public class ASTGenerator
     {

@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace CODE_interpreter.AST
+namespace CODEInterpreter.AST
 {
     public class AstPrinter : Expression.IVisitor<string>
     {
