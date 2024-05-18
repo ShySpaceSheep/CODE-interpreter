@@ -2,7 +2,7 @@
 {
     public static class Info
     {
-        private const string REPLHeader = "CODE 0.4.0-alpha by Hitsuji Labs - https://github.com/ShySpaceSheep/CODE-interpreter";
+        private const string REPLHeader = "CODE 0.4.2-alpha by Hitsuji Labs - https://github.com/ShySpaceSheep/CODE-interpreter";
         private const string REPLSubheader = "Type \"help\" or \"credits\" for more information.";
         public static string REPLMessage() { return $"{REPLHeader}\n{REPLSubheader}"; }
     }
@@ -39,6 +39,16 @@
         public static string RedefinedVar(string identifier)
         {
             return $"{ErrorType} Identifier '{identifier}' {Redefined}";
+        }
+    }
+
+    public static class TypeError
+    {
+        private const string ErrorType = "TypeError:";
+        
+        public static string IncompatibleType(string identifier, string type)
+        {
+            return $"{ErrorType} Identifier '{identifier}' of type {type} expected correct value.";
         }
     }
 }
