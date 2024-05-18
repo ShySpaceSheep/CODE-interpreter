@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using CODE_interpreter.Analyzers;
+using CODEInterpreter.Analyzers;
 
-namespace CODE_interpreter.AST
+namespace CODEInterpreter.AST
 {
     public abstract class Statement
     {
@@ -63,10 +63,11 @@ namespace CODE_interpreter.AST
         }
         public class If : Statement
         {
-            public If(AST.Expression Condition, List<Statement> ThenBranch, List<Statement> ElseBranch)
+            public If(AST.Expression Condition, List<Statement> ThenBranch, List<If> AltBranches, List<Statement> ElseBranch)
             {
                 this.Condition = Condition;
                 this.ThenBranch = ThenBranch;
+                this.ElseIfBranches = AltBranches;
                 this.ElseBranch = ElseBranch;
             }
 
@@ -75,9 +76,10 @@ namespace CODE_interpreter.AST
                 return visitor.VisitIfStatement(this);
             }
 
-         public readonly AST.Expression Condition;
-         public readonly List<Statement> ThenBranch;
-         public readonly List<Statement> ElseBranch;
+            public readonly AST.Expression Condition;
+            public readonly List<Statement> ThenBranch;
+            public readonly List<If> ElseIfBranches;
+            public readonly List<Statement> ElseBranch;
         }
         public class Print : Statement
         {
@@ -95,9 +97,9 @@ namespace CODE_interpreter.AST
         }
         public class Scanner : Statement
         {
-            public Scanner(AST.Expression Expr)
+            public Scanner(List<Var> Vars)
             {
-                this.Expr = Expr;
+                this.Vars = Vars;
             }
 
             public override R Accept<R>(IVisitor<R> visitor)
@@ -105,12 +107,13 @@ namespace CODE_interpreter.AST
                 return visitor.VisitScannerStatement(this);
             }
 
-         public readonly AST.Expression Expr;
+            public readonly List<Var> Vars;
         }
         public class Var : Statement
         {
-            public Var(Token Name, AST.Expression Initializer)
+            public Var(Token.Type DataType, Token Name, AST.Expression Initializer)
             {
+                this.DataType = DataType;
                 this.Name = Name;
                 this.Initializer = Initializer;
             }
@@ -120,8 +123,10 @@ namespace CODE_interpreter.AST
                 return visitor.VisitVarStatement(this);
             }
 
-         public readonly Token Name;
-         public readonly AST.Expression Initializer;
+
+            public readonly Token.Type DataType;
+            public readonly Token Name;
+            public readonly AST.Expression Initializer;
         }
         public class VarList : Statement
         {
