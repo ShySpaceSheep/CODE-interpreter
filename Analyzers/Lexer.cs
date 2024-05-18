@@ -1,117 +1,97 @@
 ﻿using System.Collections.Generic;
 
-using CODE_interpreter.CODEStrings;
+using CODEInterpreter.Errors;
+using CODEInterpreter.Strings;
 
-namespace CODE_interpreter.Analyzers
+using static CODEInterpreter.Analyzers.Token.Type;
+
+namespace CODEInterpreter.Analyzers
 {
     public class Lexer
     {
-        private string Source { get; }
-        private List<Token> TokenStream = new List<Token>();
+        private readonly string _source;
+        private readonly List<Token> _tokenStream = new();
 
-        private int start = 0;
-        private int current = 0;
-        private int line = 1;
-        private int column = 1;
-
-        private static readonly Dictionary<string, Token.Type> reservedKeywords = new Dictionary<string, Token.Type>
-        {
-            {"CODE", Token.Type.CODE},
-            {"BEGIN", Token.Type.BLOCK_START},
-            {"END", Token.Type.BLOCK_END},
-            {"INT", Token.Type.VAR_INT},
-            {"CHAR", Token.Type.VAR_CHAR},
-            {"BOOL", Token.Type.VAR_BOOL},
-            {"FLOAT", Token.Type.VAR_FLOAT},
-            {"IF", Token.Type.IF},
-            {"ELSE", Token.Type.ELSE},
-            {"WHILE", Token.Type.WHILE},
-            {"DISPLAY", Token.Type.DISPLAY},
-            {"SCAN", Token.Type.SCAN},
-            {"AND", Token.Type.AND},
-            {"OR", Token.Type.OR},
-            {"NOT", Token.Type.NOT}
-        };
+        private int _start = 0;
+        private int _current = 0;
+        private int _line = 1;
+        private int _column = 1;
 
         public Lexer(string source)
-        {
-            this.Source = source;
+        { 
+            _source = source;
         }
 
         public List<Token> GenerateTokenStream()
         {
-            while (!IsEndOfInput())
+            while (!IsAtEndOfFile())
             {
-                start = current;
+                _start = _current;
                 Tokenize();
             }
-            TokenStream.Add(new Token(Token.Type.EOF, "", null, line));
-            return TokenStream;
+
+            _tokenStream.Add(new Token(EOF, "", null, _line));
+            return _tokenStream;
         }
 
         private void Tokenize()
         {
             char c = Advance();
+            _column++;
             switch (c)
             {
                 case '+':
-                    AddToken(Token.Type.ADD);
+                    AddToken(ADD);
                     break;
                 case '-':
-                    AddToken(Token.Type.SUB);
+                    AddToken(SUB);
                     break;
                 case '*':
-                    AddToken(Token.Type.MULT);
+                    AddToken(MULT);
                     break;
                 case '/':
-                    AddToken(Token.Type.DIV);
+                    AddToken(DIV);
                     break;
                 case '%':
-                    AddToken(Token.Type.MOD);
+                    AddToken(MOD);
                     break;
                 case '(':
-                    AddToken(Token.Type.LEFT_PARENTHESIS);
+                    AddToken(LEFT_PARENTHESIS);
                     break;
                 case ')':
-                    AddToken(Token.Type.RIGHT_PARENTHESIS);
+                    AddToken(RIGHT_PARENTHESIS);
                     break;
-                case '[':
-                    EscapeCharacter();
+                case ',':
+                    AddToken(COMMA);
+                    break;
+                case ':':
+                    AddToken(COLON);
+                    break;
+                case '$':
+                    AddToken(NEWLINE);
+                    break;
+                case '&':
+                    AddToken(CONCAT);
                     break;
                 case '=':
-                    AddToken(Match('=') ? Token.Type.EQUAL : Token.Type.ASSIGNMENT);
+                    AddToken(Match('=') ? EQUAL : ASSIGNMENT);
                     break;
                 case '>':
-                    AddToken(Match('=') ? Token.Type.GREATER_EQUAL : Token.Type.GREATER);
+                    AddToken(Match('=') ? GREATER_EQUAL : GREATER);
                     break;
                 case '<':
                     if (Match('>'))
                     {
-                        AddToken(Token.Type.NOT_EQUAL);
+                        AddToken(NOT_EQUAL);
+                        break;
                     }
-                    else if (Match('='))
-                    {
-                        AddToken(Token.Type.LESSER_EQUAL);
-                    }
-                    else
-                    {
-                        AddToken(Token.Type.LESSER);
-                    }
-                    break;
-                case ',':
-                    AddToken(Token.Type.COMMA);
-                    break;
-                case ':':
-                    AddToken(Token.Type.COLON);
-                    break;
-                case '$':
-                    AddToken(Token.Type.NEWLINE);
-                    break;
-                case '&':
-                    AddToken(Token.Type.CONCAT);
+                    AddToken(Match('=') ? LESSER_EQUAL : LESSER);
                     break;
                 case '#':
-                    while (LookAhead() != '\n' && !IsEndOfInput()) { Advance(); }
+                    IgnoreLine();
+                    break;
+                case '[':
+                    EscapeCharacter();
                     break;
                 case '"':
                     GetStringLiteral();
@@ -125,7 +105,8 @@ namespace CODE_interpreter.Analyzers
                     break;
                 case '\n':
                     //AddToken(Token.Type.ENDLINE);
-                    line++;
+                    _column = 0;
+                    _line++;
                     break;
                 default:
                     if (IsAlpha(c))
@@ -138,7 +119,7 @@ namespace CODE_interpreter.Analyzers
                     }
                     else
                     {
-                        StdError.ThrowLexerError(line, SyntaxError.UnexpectedCharacter());
+                        StdError.ThrowLexerError(_line, SyntaxError.UnexpectedCharacter());
                     }
                     break;
             }
@@ -147,74 +128,103 @@ namespace CODE_interpreter.Analyzers
         private void TokenizeIdentifier()
         {
             while (IsAlphaNumeric(LookAhead())) { Advance(); }
-            string text = Source.Substring(start, current - start);
-            Token.Type type = reservedKeywords.TryGetValue(text, out Token.Type value) ? value : Token.Type.IDENTIFIER;
+            string text = _source[_start.._current];
+            Token.Type type = Keywords.GetReservedKeywords().TryGetValue(text, out Token.Type value) ? value : IDENTIFIER;
             AddToken(type);
         }
 
         private void TokenizeNumber()
         {
             bool isInteger = true;
-            while (IsDigit(LookAhead())) Advance();
+            while (IsDigit(LookAhead())) { Advance(); }
 
             if (LookAhead() == '.' && IsDigit(LookAheadNext()))
             {
                 Advance();
                 isInteger = false;
-                while (IsDigit(LookAhead())) Advance();
+                while (IsDigit(LookAhead())) { Advance(); }
             }
 
-            if (isInteger)
+            Token.Type type = isInteger ? VAL_INT : VAL_FLOAT;
+            AddToken(type, isInteger ? int.Parse(_source[_start.._current]) : double.Parse(_source[_start.._current]));
+        }
+
+        private void GetStringLiteral()
+        {
+            while (LookAhead() != '"' && !IsAtEndOfFile())
             {
-                AddToken(Token.Type.VAL_INT, int.Parse(Source.Substring(start, current - start)));
-            } 
+                if (LookAhead() == '\n') { _line++; }
+                Advance();
+            }
+
+            if (IsAtEndOfFile())
+            {
+                StdError.ThrowLexerError(_line, "Unterminated string");
+                return;
+            }
+
+            Advance();
+            string value = _source.Substring(_start + 1, _current - 1 - _start - 1);
+
+            // There's a specific weird choice about choosing to do boolean values within string constraints.
+            // Make an exception for literals who simply identify as "TRUE" and "FALSE".
+            // This will be changed in the 1.0 release of CODE.
+            if (value == "TRUE")
+            {
+                AddToken(TRUE);
+            }
+            else if (value == "FALSE")
+            {
+                AddToken(FALSE);
+            }
             else
             {
-                AddToken(Token.Type.VAL_FLOAT, double.Parse(Source.Substring(start, current - start)));
+                AddToken(STRING, value);
             }
         }
 
-        private bool IsAlpha(char c)
+        private void GetCharLiteral()
         {
-            return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+            if (LookAhead() == '\'' && !IsAtEndOfFile())
+            {
+                Advance();
+                StdError.ThrowLexerError(_line, "Empty char constant");
+                return;
+            }
+
+            char value = _source[_current];
+            AddToken(VAL_CHAR, value);
+            Advance();
+
+            if (Advance() != '\'')
+            {
+                StdError.ThrowLexerError(_line, "Expected terminator for char constant");
+                return;
+            }
         }
 
-        private bool IsDigit(char c)
+        private void EscapeCharacter()
         {
-            return c >= '0' && c <= '9';
+            while (LookAhead() != ']' && !IsAtEndOfFile())
+            {
+                if (LookAhead() == '\n') { _line++; }
+                Advance();
+            }
+
+            if (IsAtEndOfFile())
+            {
+                StdError.ThrowLexerError(_line, "Unterminated escape string");
+                return;
+            }
+
+            Advance();
+            string value = _source.Substring(_start + 1, _current - 1 - _start - 1);
+            AddToken(STRING, value);
         }
 
-        private bool IsAlphaNumeric(char c)
+        private void IgnoreLine()
         {
-            return IsAlpha(c) || IsDigit(c);
-        }
-        // Scan and consume the character at current pointer.
-        private char Advance()
-        {
-            return Source[current++];
-        }
-
-        // Scan and consume the character if and only if it matches correct pattern.
-        private bool Match(char expectedChar)
-        {
-            if (IsEndOfInput()) return false;
-            if (Source[current] != expectedChar) { return false; }
-
-            current++;
-            return true;
-        }
-
-        // Scan but don't consume the character.
-        private char LookAhead()
-        {
-            if (IsEndOfInput()) { return '\0'; }
-            return Source[current];
-        }
-
-        private char LookAheadNext()
-        {
-            if (current + 1 >= Source.Length) { return '\0'; }
-            return Source[current + 1];
+            while (LookAhead() != '\n' && !IsAtEndOfFile()) { Advance(); }
         }
 
         private void AddToken(Token.Type type)
@@ -224,86 +234,54 @@ namespace CODE_interpreter.Analyzers
 
         private void AddToken(Token.Type type, object literal)
         {
-            string text = Source.Substring(start, current - start);
-            TokenStream.Add(new Token(type, text, literal, line));
+            string text = _source[_start.._current];
+            _tokenStream.Add(new Token(type, text, literal, _line));
         }
 
-        private void GetStringLiteral()
+        private char Advance()
         {
-            while (LookAhead() != '"' && !IsEndOfInput())
-            {
-                if (LookAhead() == '\n') { line++; }
-                Advance();
-            }
-
-            if (IsEndOfInput())
-            {
-                StdError.ThrowLexerError(line, "Unterminated string");
-                return;
-            }
-
-            Advance();
-            string value = Source.Substring(start + 1, current - 1 - start - 1);
-
-            // There's a specific weird choice about choosing to do boolean values within string constraints.
-            // Make an exception for literals who simply identify as "TRUE" and "FALSE".
-            if (value == "TRUE")
-            {
-                AddToken(Token.Type.TRUE);
-            }
-            else if (value == "FALSE")
-            {
-                AddToken(Token.Type.FALSE);
-            }
-            else
-            {
-                AddToken(Token.Type.STRING, value);
-            }
-        }
-        
-        private void GetCharLiteral()
-        {
-            if (LookAhead() == '\'' && !IsEndOfInput())
-            {
-                Advance();
-                StdError.ThrowLexerError(line, "Empty char constant");
-                return;
-            }
- 
-            char value = Source[current];
-            AddToken(Token.Type.VAL_CHAR, value);
-            Advance();
-
-            if (Advance() != '\'')
-            {
-                StdError.ThrowLexerError(line, "Expected terminator for char constant");
-                return;
-            }
+            return _source[_current++];
         }
 
-        // I don't know how useful this is as of now.
-        private void EscapeCharacter()
+        private bool Match(char expectedChar)
         {
-            while (LookAhead() != ']' && !IsEndOfInput())
-            {
-                if (LookAhead() == '\n') { line++; }
-                Advance();
-            }
+            if (IsAtEndOfFile()) return false;
+            if (_source[_current] != expectedChar) { return false; }
 
-            if (IsEndOfInput())
-            {
-                StdError.ThrowLexerError(line, "Unterminated escape string");
-                return;
-            }
-
-            Advance();
-            string value = Source.Substring(start + 1, current - 1 - start - 1);
-            AddToken(Token.Type.STRING, value);
+            _current++;
+            return true;
         }
 
-        private bool IsEndOfInput()
+        private char LookAhead()
         {
-            return current >= Source.Length;
+            if (IsAtEndOfFile()) { return '\0'; }
+            return _source[_current];
+        }
+
+        private char LookAheadNext()
+        {
+            if (_current + 1 >= _source.Length) { return '\0'; }
+            return _source[_current + 1];
+        }
+
+        private bool IsAtEndOfFile()
+        {
+            return _current >= _source.Length;
+        }
+
+        private static bool IsAlpha(char c)
+        {
+            return char.IsLetter(c) || c == '_';
+        }
+
+        private static bool IsDigit(char c)
+        {
+            return char.IsDigit(c);
+        }
+
+        private static bool IsAlphaNumeric(char c)
+        {
+            return IsAlpha(c) || IsDigit(c);
         }
     }
 }
