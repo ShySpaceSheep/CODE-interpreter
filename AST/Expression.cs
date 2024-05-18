@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 
-using CODE_interpreter.Analyzers;
+using CODEInterpreter.Analyzers;
 
-namespace CODE_interpreter.AST
+namespace CODEInterpreter.AST
 {
     public abstract class Expression
     {
