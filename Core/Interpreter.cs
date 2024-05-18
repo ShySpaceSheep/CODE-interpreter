@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using CODE_interpreter.Analyzers;
-using CODE_interpreter.AST;
+using CODEInterpreter.Analyzers;
+using CODEInterpreter.AST;
+using CODEInterpreter.Errors;
+using CODEInterpreter.Strings;
 
-
-namespace CODE_interpreter
+namespace CODEInterpreter
 {
     public class Interpreter : Expression.IVisitor<Object>, Statement.IVisitor<object>
     {
-        private readonly Environment Env = new Environment();
+        private readonly Environment _env = new();
 
         public void Interpret(List<Statement> statements)
         {
@@ -56,16 +57,18 @@ namespace CODE_interpreter
             switch (expr.Operator.TokenType) 
             {
                 case Token.Type.NOT:
-                    return IsTruthy(right);
+                    return !IsTruthy(right);
                 case Token.Type.SUB:
-                    return -(double)right;
+                    if (right is int) { return -(int) right; }
+                    if (right is double) { return -(double) right; }
+                    throw new StdError.RuntimeError(expr.Operator, "Operation error: Cannot operate on non-numerical type.");
             }
             return null;
         }
 
         public Object VisitVariableExpression(Expression.Variable expr)
         {
-            return Env.Get(expr.Name);
+            return _env.Get(expr.Name);
         }
 
         private void CheckNumberOperand(Token op, Object operand)
@@ -161,11 +164,26 @@ namespace CODE_interpreter
 
         public Object VisitIfStatement(Statement.If stmt)
         {
+            bool allChoicesUnsatisfactory = false;
             if (IsTruthy(Evaluate(stmt.Condition)))
             {
                 ExecuteIfBlock(stmt.ThenBranch);
+                return null;
             }
-            else if (stmt.ElseBranch != null)
+            else if (stmt.ElseIfBranches != null)
+            {
+                foreach (Statement.If elifBranches in stmt.ElseIfBranches)
+                {
+                    if (IsTruthy(Evaluate(elifBranches.Condition)))
+                    {
+                        ExecuteIfBlock(elifBranches.ThenBranch);
+                        return null;
+                    }
+                }
+            }
+
+            allChoicesUnsatisfactory = true;
+            if (stmt.ElseBranch != null && allChoicesUnsatisfactory)
             {
                 ExecuteIfBlock(stmt.ElseBranch);
             }
@@ -181,6 +199,32 @@ namespace CODE_interpreter
 
         public Object VisitScannerStatement(Statement.Scanner sc)
         {
+            System.IO.StreamReader reader = new(Console.OpenStandardInput());
+            foreach (Statement.Var var in sc.Vars)
+            {
+                Console.Write(var.Name.Lexeme + ": ");
+                string value = reader.ReadLine();
+
+                object parsedValue = null;
+                if (int.TryParse(value, out int parsedInt))
+                {
+                    parsedValue = parsedInt;
+                }
+                else if (double.TryParse(value, out double parsedDob))
+                {
+                    parsedValue = parsedDob;
+                }
+                else if (char.TryParse(value, out char parsedChar))
+                {
+                    parsedValue = parsedChar;
+                }
+                else if (bool.TryParse(value, out bool parsedBool))
+                {
+                    parsedValue = parsedBool;
+                }
+
+                _env.Assign(var.Name, parsedValue);
+            }
             return null;
         }
 
@@ -190,9 +234,37 @@ namespace CODE_interpreter
             if (stmt.Initializer != null)
             {
                 value = Evaluate(stmt.Initializer);
+                if (stmt.DataType == Token.Type.VAR_INT)
+                {
+                    if (value is not int) 
+                    { 
+                        throw new StdError.RuntimeError(stmt.Name, TypeError.IncompatibleType(stmt.Name.Lexeme, stmt.DataType.ToString()));
+                    }
+                } 
+                else if (stmt.DataType == Token.Type.VAR_FLOAT)
+                {
+                    if (value is not double)
+                    {
+                        throw new StdError.RuntimeError(stmt.Name, TypeError.IncompatibleType(stmt.Name.Lexeme, stmt.DataType.ToString()));
+                    }
+                }
+                else if (stmt.DataType == Token.Type.VAR_CHAR)
+                {
+                    if (value is not char)
+                    {
+                        throw new StdError.RuntimeError(stmt.Name, TypeError.IncompatibleType(stmt.Name.Lexeme, stmt.DataType.ToString()));
+                    }
+                }
+                else if (stmt.DataType == Token.Type.VAR_BOOL)
+                {
+                    if (value is not bool)
+                    {
+                        throw new StdError.RuntimeError(stmt.Name, TypeError.IncompatibleType(stmt.Name.Lexeme, stmt.DataType.ToString()));
+                    }
+                }
             }
 
-            Env.DefineVar(stmt.Name, value);
+            _env.DefineVar(stmt.DataType, stmt.Name, value);
             return null;
         }
 
@@ -200,13 +272,7 @@ namespace CODE_interpreter
         {
             foreach (Statement.Var stmt in declarations.Declarations)
             {
-                object value = null;
-                if (stmt.Initializer != null)
-                {
-                    value = Evaluate(stmt.Initializer);
-                }
-
-                Env.DefineVar(stmt.Name, value);
+                VisitVarStatement(stmt);
             }
             return null;
         }
@@ -222,7 +288,7 @@ namespace CODE_interpreter
         public Object VisitAssignExpression(Expression.Assign expr)
         {
             Object value = Evaluate(expr.Value);
-            Env.Assign(expr.Name, value);
+            _env.Assign(expr.Name, value);
             return value;
         }
 
@@ -237,9 +303,13 @@ namespace CODE_interpreter
                     return left.ToString() + right.ToString();
                 case Token.Type.ADD:
                     CheckNumberOperands(expr.Operator, left, right);
-                    if (left is int && right is int) { return (int)left + (int)right; }
+                    if (left is int && right is int) 
+                    {
+                        return (int)left + (int)right; 
+                    }
                     if (left is double && right is double) { return (double)left + (double)right; }
-                    return (double)left + (double)right;
+                    //return (double)left + (double)right;
+                    break;
                 case Token.Type.SUB:
                     CheckNumberOperands(expr.Operator, left, right);
                     if (left is int && right is int) { return (int)left - (int)right; }
@@ -285,8 +355,6 @@ namespace CODE_interpreter
                 case Token.Type.EQUAL: 
                     return IsEqual(left, right);
             }
-
-            // Unreachable.
             return null;
         }
     }
