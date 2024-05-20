@@ -25,7 +25,7 @@
             LEFT_SBRACKET, RIGHT_SBRACKET,
 
             // Keyword for data types and literals
-            IDENTIFIER, VAL_INT, VAL_FLOAT, VAL_CHAR, STRING,
+            IDENTIFIER, VAL_INT, VAL_FLOAT, VAL_CHAR, STRING, ASSIGNABLE,
             TRUE, FALSE, NIL,
             VAR_INT, VAR_FLOAT, VAR_CHAR, VAR_BOOL,
 
