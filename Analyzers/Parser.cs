@@ -126,9 +126,17 @@ namespace CODEInterpreter.Analyzers
                     {
                         altBranches.Add(new Statement.If(Expression(), IfBlock(), null, null));
 
-                        if (Match(ELSE)) { continue; }
+                        if (Match(ELSE))
+                        { 
+                            if (!Check(IF))
+                            {
+                                elseBranch = IfBlock();
+                                break;
+                            }
+                            continue; 
+                        }
                     }
-                    elseBranch = IfBlock();
+                    
                 }
                 else
                 {
