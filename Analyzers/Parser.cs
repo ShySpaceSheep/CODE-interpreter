@@ -20,6 +20,18 @@ namespace CODEInterpreter.Analyzers
         public List<Statement> Parse()
         {
             List<Statement> statements = new();
+
+            /*foreach (Token t in _tokenStream)
+            {
+                System.Console.WriteLine(t.TokenType.ToString());
+            }*/
+
+            // Try and remove unnecessary endlines:
+            while (Check(ENDLINE))
+            {
+                Advance();
+            }
+
             try
             {
                 // Just look at the TokenStream directly ahead of time if it's in a valid block.
@@ -186,11 +198,13 @@ namespace CODEInterpreter.Analyzers
 
                 break;
             }
+
             return new Statement.VarList(declarations_list);
         }
 
         private Statement Declaration()
         {
+            if (Check(ENDLINE)) { Advance(); }
             try
             {
                 if (Check(VAR_INT) || Check(VAR_FLOAT) || Check(VAR_CHAR) || Check(VAR_BOOL)) return VarDeclaration();
@@ -205,6 +219,7 @@ namespace CODEInterpreter.Analyzers
 
         private Statement Statement()
         {
+            if (Check(ENDLINE)) { Advance(); }
             if (Match(IF)) return IfStatement();
             if (Match(WHILE)) return WhileStatement();
             if (Match(DISPLAY))
@@ -229,6 +244,7 @@ namespace CODEInterpreter.Analyzers
 
         private Expression Expression()
         {
+            if (Check(ENDLINE)) { Advance(); }
             return Assignment();
         }
 
@@ -405,6 +421,17 @@ namespace CODEInterpreter.Analyzers
         private Token Previous()
         {
             return _tokenStream[_current - 1];
+        }
+
+        private void ExpectEndline()
+        {
+            if (IsAtEndOfStream()) { return; }
+            if (LookAhead().TokenType == ENDLINE) 
+            {   
+                Advance();
+                return;
+            }
+            throw StdError.ThrowParseError(LookAhead(), "Expected new line");
         }
 
         private bool IsAtEndOfLine()

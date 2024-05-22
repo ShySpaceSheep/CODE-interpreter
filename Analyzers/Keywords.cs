@@ -26,7 +26,7 @@ namespace CODEInterpreter.Analyzers
             {"OR", Token.Type.OR},
             {"NOT", Token.Type.NOT},
             {"BREAK", Token.Type.BREAK},
-            {"CONTINUE", Token.Type.CONTINUE}
+            {"CONTINUE", Token.Type.CONTINUE},
         };
 
         public static Dictionary<string, Token.Type> GetReservedKeywords() { return _rk; }

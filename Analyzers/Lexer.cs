@@ -68,7 +68,7 @@ namespace CODEInterpreter.Analyzers
                     AddToken(COLON);
                     break;
                 case '$':
-                    AddToken(NEWLINE);
+                    AddToken(STRING, "\n");
                     break;
                 case '&':
                     AddToken(CONCAT);
@@ -104,7 +104,7 @@ namespace CODEInterpreter.Analyzers
                 case '\t':
                     break;
                 case '\n':
-                    //AddToken(Token.Type.ENDLINE);
+                    //AddToken(ENDLINE);
                     _column = 0;
                     _line++;
                     break;
@@ -183,6 +183,7 @@ namespace CODEInterpreter.Analyzers
             }
         }
 
+        // TODO
         private void GetCharLiteral()
         {
             if (LookAhead() == '\'' && !IsAtEndOfFile())

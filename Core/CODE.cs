@@ -53,6 +53,9 @@ namespace CODEInterpreter
             Execute(source);
 
             if (StdError.HasSyntaxError) { System.Environment.Exit((int) ExitType.EX_SYNTAX_ERR); }
+
+            // For demo purposes, remove once done for 1.0 release:
+            Console.WriteLine($"Program exited with code {(int)ExitType.EX_SUCCESS}: NO ERRORS");
         }
 
         private static void RunFromREPL()
