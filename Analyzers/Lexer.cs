@@ -183,7 +183,6 @@ namespace CODEInterpreter.Analyzers
             }
         }
 
-        // TODO
         private void GetCharLiteral()
         {
             if (LookAhead() == '\'' && !IsAtEndOfFile())
@@ -197,6 +196,12 @@ namespace CODEInterpreter.Analyzers
             AddToken(VAL_CHAR, value);
             Advance();
 
+            if (LookAhead() != '\'')
+            {
+                StdError.ThrowLexerError(_line, "Multi-character constant not allowed");
+                return;
+            }
+
             if (Advance() != '\'')
             {
                 StdError.ThrowLexerError(_line, "Expected terminator for char constant");
@@ -206,21 +211,35 @@ namespace CODEInterpreter.Analyzers
 
         private void EscapeCharacter()
         {
-            while (LookAhead() != ']' && !IsAtEndOfFile())
+            char value = Advance();
+            if (LookAhead() == ']' && !IsAtEndOfFile())
             {
-                if (LookAhead() == '\n') { _line++; }
                 Advance();
-            }
-
-            if (IsAtEndOfFile())
+                if (LookAhead() == ']' && value == ']' && !IsAtEndOfFile())
+                {
+                    AddToken(VAL_CHAR, value);
+                    Advance();
+                    return;
+                }
+                AddToken(VAL_CHAR, value);
+            } 
+            else
             {
-                StdError.ThrowLexerError(_line, "Unterminated escape string");
-                return;
-            }
+                while (LookAhead() != ']' && !IsAtEndOfFile())
+                {
+                    if (LookAhead() == '\n') { _line++; }
+                    Advance();
+                }
 
-            Advance();
-            string value = _source.Substring(_start + 1, _current - 1 - _start - 1);
-            AddToken(STRING, value);
+                if (IsAtEndOfFile())
+                {
+                    StdError.ThrowLexerError(_line, "Unterminated escape sequence");
+                    return;
+                }
+
+                Advance();
+                StdError.ThrowLexerError(_line, "'VAL_CHAR' type incomptabile with multi-character constants");
+            }
         }
 
         private void IgnoreLine()

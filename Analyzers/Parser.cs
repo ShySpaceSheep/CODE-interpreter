@@ -21,17 +21,6 @@ namespace CODEInterpreter.Analyzers
         {
             List<Statement> statements = new();
 
-            /*foreach (Token t in _tokenStream)
-            {
-                System.Console.WriteLine(t.TokenType.ToString());
-            }*/
-
-            // Try and remove unnecessary endlines:
-            while (Check(ENDLINE))
-            {
-                Advance();
-            }
-
             try
             {
                 // Just look at the TokenStream directly ahead of time if it's in a valid block.
