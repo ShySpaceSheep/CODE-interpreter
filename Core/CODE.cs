@@ -66,7 +66,7 @@ namespace CODEInterpreter
             for (;;)
             {
                 // Main loop just attends to expressions inputted by the user.
-                Console.Write(">>> ");
+                Console.Write("\n>>> ");
                 string line = reader.ReadLine();
                 
                 // Once we find a valid opening, all statements are now allowed.

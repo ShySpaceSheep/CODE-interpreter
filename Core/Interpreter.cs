@@ -85,7 +85,8 @@ namespace CODEInterpreter
 
         private void CheckZeroDivisor(Token op, Object right)
         {
-            if (right is Double && !((Double) right == 0)) { return; }
+            if (right is int && !((int)right == 0)) { return; }
+            if (right is double && !((double) right == 0)) { return; }
             throw new StdError.RuntimeError(op, "ZeroDivisionError: Divisor must be non-zero.");
         }
         private bool IsTruthy(object obj)
