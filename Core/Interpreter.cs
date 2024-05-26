@@ -193,7 +193,7 @@ namespace CODEInterpreter
         public Object VisitPrintStatement(Statement.Print stmt)
         {
             object value = Evaluate(stmt.Expr);
-            Console.WriteLine(Stringify(value));
+            Console.Write(Stringify(value));
             return null;
         }
 
